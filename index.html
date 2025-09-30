@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventHub - College Event Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #7E57C2;
+            --primary-light: #9575CD;
+            --primary-dark: #65499c;
+            --secondary: #26A69A;
+            --accent: #FF7043;
+            --neutral: #546E7A;
+            --neutral-light: #F5F7FA;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(126, 87, 194, 0.2);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .nav-tab {
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px -1px rgba(126, 87, 194, 0.1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #1E8E7F;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+        .category-technical {
+            background: linear-gradient(135deg, #7E57C2 0%, #65499c 100%);
+        }
+        .category-cultural {
+            background: linear-gradient(135deg, #26A69A 0%, #1E8E7F 100%);
+        }
+        .category-sports {
+            background: linear-gradient(135deg, #FF7043 0%, #F4511E 100%);
+        }
+        .category-workshop {
+            background: linear-gradient(135deg, #FFA726 0%, #FF9800 100%);
+        }
+        .auth-container {
+            display: none;
+        }
+        .auth-container.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="bg-white shadow-md hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-calendar-alt text-purple-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">EventHub</span>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="#" class="nav-tab active" data-tab="dashboard">Dashboard</a>
+                        <a href="#" class="nav-tab" data-tab="events">Events</a>
+                        <a href="#" class="nav-tab organizer-only" data-tab="add-event">Add Event</a>
+                        <a href="#" class="nav-tab organizer-only" data-tab="manage-events">Manage Events</a>
+                        <a href="#" class="nav-tab" data-tab="my-events">My Events</a>
+                        <a href="#" class="nav-tab" data-tab="calendar">Calendar</a>
+                        <a href="#" class="nav-tab organizer-only" data-tab="reports">Reports</a>
+                        <a href="#" class="nav-tab" data-tab="profile">Profile</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-gray-700 mr-4 user-role-display"></span>
+                        <button id="logoutBtn" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Auth Pages -->
+    <div id="auth-page" class="min-h-screen flex items-center justify-center gradient-bg py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl">
+            <div>
+                <div class="mx-auto h-12 w-12 bg-purple-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-xl"></i>
+                </div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    College Event Management
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    Join EventHub to manage college events
+                </p>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-container" class="auth-container active">
+                <form class="mt-8 space-y-6" id="loginForm">
+                    <div class="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <label for="login-username" class="sr-only">Username</label>
+                            <input id="login-username" name="username" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" placeholder="Username">
+                        </div>
+                        <div>
+                            <label for="login-password" class="sr-only">Password</label>
+                            <input id="login-password" name="password" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" placeholder="Password">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            Sign in
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" id="show-signup" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                            Don't have an account? Sign up
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Signup Form -->
+            <div id="signup-container" class="auth-container">
+                <form class="mt-8 space-y-6" id="signupForm">
+                    <div class="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <label for="signup-name" class="sr-only">Full Name</label>
+                            <input id="signup-name" name="name" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" placeholder="Full Name">
+                        </div>
+                        <div>
+                            <label for="signup-username" class="sr-only">Username</label>
+                            <input id="signup-username" name="username" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" placeholder="Username">
+                        </div>
+                        <div>
+                            <label for="signup-password" class="sr-only">Password</label>
+                            <input id="signup-password" name="password" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" placeholder="Password">
+                        </div>
+                        <div>
+                            <label for="signup-role" class="sr-only">Role</label>
+                            <select id="signup-role" name="role" required class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm">
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="student">Student</option>
+                                <option value="organizer">Organizer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            Create Account
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" id="show-login" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                            Already have an account? Sign in
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="hidden container mx-auto px-4 py-8">
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 dashboard-title">Dashboard</h1>
+                <p class="text-gray-600 dashboard-subtitle">Overview and quick actions</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                            <i class="fas fa-calendar-day text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Events</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-events">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                            <i class="fas fa-users text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Participants</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-participants">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                            <i class="fas fa-user-tie text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Organizers</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-organizers">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                            <i class="fas fa-tasks text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">My Events</p>
+                            <p class="text-2xl font-bold text-gray-800" id="my-events">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Recent Activity</h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="recent-activity-list">
+                            <div class="text-center py-8">
+                                <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                                <p class="text-gray-500">No recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Quick Actions</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 gap-4">
+                            <button class="organizer-only flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition duration-150 quick-action" data-action="add-event">
+                                <div class="p-2 rounded-full bg-purple-100 text-purple-600 mr-4">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <span class="font-medium text-gray-800">Add New Event</span>
+                            </button>
+                            <button class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition duration-150 quick-action" data-action="view-events">
+                                <div class="p-2 rounded-full bg-green-100 text-green-600 mr-4">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <span class="font-medium text-gray-800">Browse Events</span>
+                            </button>
+                            <button class="student-only flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition duration-150 quick-action" data-action="my-events">
+                                <div class="p-2 rounded-full bg-blue-100 text-blue-600 mr-4">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <span class="font-medium text-gray-800">My Registered Events</span>
+                            </button>
+                            <button class="organizer-only flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition duration-150 quick-action" data-action="reports">
+                                <div class="p-2 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <span class="font-medium text-gray-800">View Reports</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Tab -->
+        <div id="events-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">All Events</h1>
+                <p class="text-gray-600">Discover and register for upcoming college events</p>
+            </div>
+
+            <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-4 py-2 btn-primary rounded-md text-sm font-medium event-filter active" data-filter="all">All Events</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 event-filter" data-filter="technical">Technical</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 event-filter" data-filter="cultural">Cultural</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 event-filter" data-filter="sports">Sports</button>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <div class="relative">
+                        <input type="text" id="event-search" placeholder="Search events..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Events will be dynamically loaded here -->
+            </div>
+        </div>
+
+        <!-- Add Event Tab -->
+        <div id="add-event-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Add New Event</h1>
+                <p class="text-gray-600">Create a new event for students to register</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">Event Details</h2>
+                </div>
+                <div class="p-6">
+                    <form id="add-event-form">
+                        <div class="mb-4">
+                            <label for="add-event-name" class="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
+                            <input type="text" id="add-event-name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="add-event-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select id="add-event-category" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                                <option value="technical">Technical</option>
+                                <option value="cultural">Cultural</option>
+                                <option value="sports">Sports</option>
+                                <option value="workshop">Workshop</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="add-event-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                <input type="date" id="add-event-date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                            </div>
+                            <div>
+                                <label for="add-event-time" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                <input type="time" id="add-event-time" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="add-event-venue" class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
+                            <input type="text" id="add-event-venue" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="add-event-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="add-event-description" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="add-event-capacity" class="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                            <input type="number" id="add-event-capacity" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" value="50" required>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn-primary px-6 py-2 rounded-md text-sm font-medium">
+                                Create Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Events Tab -->
+        <div id="manage-events-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Manage Events</h1>
+                <p class="text-gray-600">Manage your created events</p>
+            </div>
+
+            <div class="mb-6 flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <button class="px-4 py-2 btn-primary rounded-md text-sm font-medium event-status-filter active" data-status="all">All Events</button>
+                    <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 event-status-filter" data-status="upcoming">Upcoming</button>
+                    <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 event-status-filter" data-status="past">Past</button>
+                </div>
+            </div>
+
+            <div id="manage-events-container" class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Events management content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- My Events Tab -->
+        <div id="my-events-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">My Events</h1>
+                <p class="text-gray-600">Events you've registered for</p>
+            </div>
+
+            <div id="my-events-container" class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- My events content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Calendar Tab -->
+        <div id="calendar-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Event Calendar</h1>
+                <p class="text-gray-600">View all events in calendar format</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-xl font-semibold text-gray-800">March 2024</h2>
+                        <div class="flex space-x-2">
+                            <button class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <i class="fas fa-chevron-left text-gray-600"></i>
+                            </button>
+                            <button class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <i class="fas fa-chevron-right text-gray-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-2 mb-2">
+                        <div class="text-center font-medium text-gray-500 py-2">Sun</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Mon</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Tue</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Wed</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Thu</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Fri</div>
+                        <div class="text-center font-medium text-gray-500 py-2">Sat</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-2" id="calendar-days">
+                        <!-- Calendar days will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Event Reports</h1>
+                <p class="text-gray-600">Analytics and insights about your events</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Event Categories</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Participation Rate</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="chart-container">
+                            <canvas id="participationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Monthly Events</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="chart-container">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Event Statistics</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Events Created</span>
+                                <span class="font-medium" id="report-total-events">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Participants</span>
+                                <span class="font-medium" id="report-total-participants">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Average Participation</span>
+                                <span class="font-medium" id="report-avg-participation">0%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Most Popular Category</span>
+                                <span class="font-medium" id="report-popular-category">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile-tab" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">My Profile</h1>
+                <p class="text-gray-600">Manage your account settings</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">Profile Information</h2>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                            <span class="text-purple-600 text-xl font-bold" id="profile-initial">U</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800" id="profile-name">User Name</h3>
+                            <p class="text-gray-600" id="profile-role">Role</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <p class="text-gray-800" id="profile-username">username</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
+                            <p class="text-gray-800" id="profile-joined">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Events Registered</label>
+                            <p class="text-gray-800" id="profile-events-registered">0</p>
+                        </div>
+                        <div class="organizer-only">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Events Created</label>
+                            <p class="text-gray-800" id="profile-events-created">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User data storage
+        let users = JSON.parse(localStorage.getItem('eventhub_users')) || [];
+        let events = JSON.parse(localStorage.getItem('eventhub_events')) || [];
+        
+        // DOM Elements
+        const authPage = document.getElementById('auth-page');
+        const navbar = document.getElementById('navbar');
+        const mainContent = document.getElementById('main-content');
+        const loginContainer = document.getElementById('login-container');
+        const signupContainer = document.getElementById('signup-container');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const addEventForm = document.getElementById('add-event-form');
+        const showSignupBtn = document.getElementById('show-signup');
+        const showLoginBtn = document.getElementById('show-login');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleDisplay = document.querySelector('.user-role-display');
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Chart instances
+        let categoryChart, participationChart, monthlyChart;
+
+        // Current user state
+        let currentUser = null;
+        let nextEventId = events.length > 0 ? Math.max(...events.map(e => e.id)) + 1 : 1;
+
+        // Initialize the application
+        function init() {
+            showAuthPage();
+            setupEventListeners();
+            updateEventDisplay();
+            updateManageEventsDisplay();
+            updateMyEventsDisplay();
+            updateCalendar();
+            updateProfile();
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Auth form toggling
+            showSignupBtn.addEventListener('click', function() {
+                loginContainer.classList.remove('active');
+                signupContainer.classList.add('active');
+            });
+            
+            showLoginBtn.addEventListener('click', function() {
+                signupContainer.classList.remove('active');
+                loginContainer.classList.add('active');
+            });
+
+            // Login form handler
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                const user = users.find(u => u.username === username && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    showDashboard(user.role);
+                    updateNavigation(user.role);
+                    userRoleDisplay.textContent = `${user.name} (${user.role})`;
+                    updateDashboardStats();
+                } else {
+                    alert('Invalid username or password. Please try again.');
+                }
+            });
+
+            // Signup form handler
+            signupForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('signup-name').value;
+                const username = document.getElementById('signup-username').value;
+                const password = document.getElementById('signup-password').value;
+                const role = document.getElementById('signup-role').value;
+                
+                // Check if username already exists
+                if (users.find(u => u.username === username)) {
+                    alert('Username already exists. Please choose a different one.');
+                    return;
+                }
+                
+                const newUser = {
+                    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+                    name,
+                    username,
+                    password,
+                    role,
+                    joined: new Date().toISOString().split('T')[0]
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('eventhub_users', JSON.stringify(users));
+                
+                currentUser = newUser;
+                showDashboard(newUser.role);
+                updateNavigation(newUser.role);
+                userRoleDisplay.textContent = `${newUser.name} (${newUser.role})`;
+                updateDashboardStats();
+                
+                // Switch to login view for next time
+                signupContainer.classList.remove('active');
+                loginContainer.classList.add('active');
+                
+                alert('Account created successfully!');
+            });
+
+            // Add event form handler
+            addEventForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const eventName = document.getElementById('add-event-name').value;
+                const eventCategory = document.getElementById('add-event-category').value;
+                const eventDate = document.getElementById('add-event-date').value;
+                const eventTime = document.getElementById('add-event-time').value;
+                const eventVenue = document.getElementById('add-event-venue').value;
+                const eventDescription = document.getElementById('add-event-description').value;
+                const eventCapacity = document.getElementById('add-event-capacity').value;
+
+                if (eventName && eventCategory && eventDate && eventTime && eventVenue && eventCapacity) {
+                    const newEvent = {
+                        id: nextEventId++,
+                        name: eventName,
+                        date: eventDate,
+                        time: eventTime,
+                        venue: eventVenue,
+                        description: eventDescription,
+                        category: eventCategory,
+                        organizerId: currentUser.id,
+                        organizerName: currentUser.name,
+                        participants: [],
+                        capacity: parseInt(eventCapacity),
+                        registered: 0,
+                        status: 'upcoming'
+                    };
+
+                    events.push(newEvent);
+                    localStorage.setItem('eventhub_events', JSON.stringify(events));
+                    
+                    addEventForm.reset();
+                    
+                    updateEventDisplay();
+                    updateManageEventsDisplay();
+                    updateDashboardStats();
+                    updateProfile();
+                    
+                    alert('Event created successfully!');
+                    
+                    // Switch to events tab
+                    document.querySelector('[data-tab="events"]').click();
+                } else {
+                    alert('Please fill in all required fields.');
+                }
+            });
+
+            // Logout handler
+            logoutBtn.addEventListener('click', function() {
+                currentUser = null;
+                showAuthPage();
+                userRoleDisplay.textContent = '';
+            });
+
+            // Navigation tab handler
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Update dashboard title if needed
+                    if (tabId === 'dashboard') {
+                        updateDashboardTitle(currentUser.role);
+                        updateDashboardStats();
+                    } else if (tabId === 'events') {
+                        updateEventDisplay();
+                    } else if (tabId === 'manage-events') {
+                        updateManageEventsDisplay();
+                    } else if (tabId === 'my-events') {
+                        updateMyEventsDisplay();
+                    } else if (tabId === 'calendar') {
+                        updateCalendar();
+                    } else if (tabId === 'reports') {
+                        updateReports();
+                    } else if (tabId === 'profile') {
+                        updateProfile();
+                    }
+                });
+            });
+
+            // Event filtering
+            document.querySelectorAll('.event-filter').forEach(filter => {
+                filter.addEventListener('click', function() {
+                    document.querySelectorAll('.event-filter').forEach(f => f.classList.remove('active', 'btn-primary'));
+                    document.querySelectorAll('.event-filter').forEach(f => f.classList.add('bg-gray-200', 'text-gray-700'));
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('active', 'btn-primary');
+                    updateEventDisplay(this.getAttribute('data-filter'));
+                });
+            });
+
+            // Event status filtering
+            document.querySelectorAll('.event-status-filter').forEach(filter => {
+                filter.addEventListener('click', function() {
+                    document.querySelectorAll('.event-status-filter').forEach(f => f.classList.remove('active', 'btn-primary'));
+                    document.querySelectorAll('.event-status-filter').forEach(f => f.classList.add('bg-gray-200', 'text-gray-700'));
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('active', 'btn-primary');
+                    updateManageEventsDisplay(this.getAttribute('data-status'));
+                });
+            });
+
+            // Quick actions
+            document.querySelectorAll('.quick-action').forEach(action => {
+                action.addEventListener('click', function() {
+                    const actionType = this.getAttribute('data-action');
+                    handleQuickAction(actionType);
+                });
+            });
+
+            // Event search
+            document.getElementById('event-search')?.addEventListener('input', function() {
+                updateEventDisplay();
+            });
+        }
+
+        // Show appropriate dashboard based on role
+        function showDashboard(role) {
+            authPage.classList.add('hidden');
+            navbar.classList.remove('hidden');
+            mainContent.classList.remove('hidden');
+            
+            updateDashboardTitle(role);
+            updateRoleSpecificElements(role);
+            updateDashboardStats();
+        }
+
+        // Update dashboard title based on role
+        function updateDashboardTitle(role) {
+            const dashboardTitle = document.querySelector('.dashboard-title');
+            const dashboardSubtitle = document.querySelector('.dashboard-subtitle');
+            
+            if (role === 'organizer') {
+                dashboardTitle.textContent = 'Organizer Dashboard';
+                dashboardSubtitle.textContent = 'Event management and participant tracking';
+            } else if (role === 'student') {
+                dashboardTitle.textContent = 'Student Dashboard';
+                dashboardSubtitle.textContent = 'Discover and register for events';
+            }
+        }
+
+        // Show auth page
+        function showAuthPage() {
+            authPage.classList.remove('hidden');
+            navbar.classList.add('hidden');
+            mainContent.classList.add('hidden');
+        }
+
+        // Update navigation based on user role
+        function updateNavigation(role) {
+            // Hide all role-specific elements first
+            document.querySelectorAll('.admin-only, .organizer-only, .student-only').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show elements based on role
+            if (role === 'organizer') {
+                document.querySelectorAll('.organizer-only').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+            } else if (role === 'student') {
+                document.querySelectorAll('.student-only').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+            }
+        }
+
+        // Update role-specific UI elements
+        function updateRoleSpecificElements(role) {
+            // Hide all role-specific content first
+            document.querySelectorAll('.admin-only, .organizer-only, .student-only').forEach(el => {
+                if (el.classList.contains('stat-card') || el.closest('.grid')) {
+                    el.style.display = 'none';
+                }
+            });
+            
+            // Show appropriate content based on role
+            if (role === 'organizer') {
+                document.querySelectorAll('.organizer-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+            } else if (role === 'student') {
+                document.querySelectorAll('.student-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            const totalEvents = events.length;
+            const totalParticipants = events.reduce((sum, event) => sum + event.registered, 0);
+            const totalOrganizers = users.filter(u => u.role === 'organizer').length;
+            const myEvents = currentUser.role === 'organizer' 
+                ? events.filter(e => e.organizerId === currentUser.id).length
+                : events.filter(e => e.participants.includes(currentUser.id)).length;
+
+            document.getElementById('total-events').textContent = totalEvents;
+            document.getElementById('total-participants').textContent = totalParticipants;
+            document.getElementById('total-organizers').textContent = totalOrganizers;
+            document.getElementById('my-events').textContent = myEvents;
+
+            // Update recent activity
+            const recentActivityList = document.getElementById('recent-activity-list');
+            if (events.length > 0) {
+                const userEvents = currentUser.role === 'organizer' 
+                    ? events.filter(e => e.organizerId === currentUser.id)
+                    : events.filter(e => e.participants.includes(currentUser.id));
+                    
+                if (userEvents.length > 0) {
+                    recentActivityList.innerHTML = userEvents.slice(0, 3).map(event => `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2">
+                            <div>
+                                <p class="font-medium text-gray-800">${event.name}</p>
+                                <p class="text-sm text-gray-600">${formatDate(event.date)} • ${event.venue}</p>
+                            </div>
+                            <span class="text-xs text-gray-500">${event.status}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    recentActivityList.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500">No recent activity</p>
+                        </div>
+                    `;
+                }
+            } else {
+                recentActivityList.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                        <p class="text-gray-500">No recent activity</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update events display
+        function updateEventDisplay(filter = 'all') {
+            const eventsContainer = document.getElementById('events-container');
+            const searchTerm = document.getElementById('event-search')?.value.toLowerCase() || '';
+            
+            let filteredEvents = events.filter(event => 
+                (filter === 'all' || event.category === filter) &&
+                (event.name.toLowerCase().includes(searchTerm) || 
+                 event.venue.toLowerCase().includes(searchTerm))
+            );
+
+            if (filteredEvents.length > 0) {
+                eventsContainer.innerHTML = filteredEvents.map(event => `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                        <div class="h-40 ${getCategoryClass(event.category)} flex items-center justify-center">
+                            <i class="${getCategoryIcon(event.category)} text-white text-5xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-gray-800">${event.name}</h3>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeClass(event.category)}">
+                                    ${event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+                                </span>
+                            </div>
+                            <div class="flex items-center text-gray-500 text-sm mb-2">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                <span>${formatDate(event.date)}</span>
+                            </div>
+                            <div class="flex items-center text-gray-500 text-sm mb-2">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>${event.time}</span>
+                            </div>
+                            <div class="flex items-center text-gray-500 text-sm mb-4">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>${event.venue}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-500">${event.registered}/${event.capacity} registered</span>
+                                <button class="btn-primary px-4 py-2 rounded-md text-sm font-medium register-btn" data-event-id="${event.id}">
+                                    ${event.participants.includes(currentUser.id) ? 'Registered' : 'Register Now'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to register buttons
+                document.querySelectorAll('.register-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const eventId = parseInt(this.getAttribute('data-event-id'));
+                        const event = events.find(e => e.id === eventId);
+                        
+                        if (event) {
+                            if (event.participants.includes(currentUser.id)) {
+                                // Unregister
+                                event.participants = event.participants.filter(id => id !== currentUser.id);
+                                event.registered--;
+                                this.textContent = 'Register Now';
+                                alert(`You have unregistered from ${event.name}`);
+                            } else {
+                                // Register
+                                if (event.registered < event.capacity) {
+                                    event.participants.push(currentUser.id);
+                                    event.registered++;
+                                    this.textContent = 'Registered';
+                                    alert(`You have successfully registered for ${event.name}`);
+                                } else {
+                                    alert('Sorry, this event is already full.');
+                                }
+                            }
+                            localStorage.setItem('eventhub_events', JSON.stringify(events));
+                            updateDashboardStats();
+                            updateMyEventsDisplay();
+                            updateProfile();
+                        }
+                    });
+                });
+            } else {
+                eventsContainer.innerHTML = `
+                    <div class="col-span-full bg-white rounded-lg shadow-md p-12 text-center">
+                        <i class="fas fa-calendar-plus text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-xl font-medium text-gray-700 mb-2">No events found</h3>
+                        <p class="text-gray-500">There are currently no events matching your criteria.</p>
+                        ${currentUser.role === 'organizer' ? `
+                            <button class="btn-primary mt-4 px-4 py-2 rounded-md text-sm font-medium quick-action" data-action="add-event">
+                                Create Your First Event
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+
+                document.querySelector('#events-container .quick-action')?.addEventListener('click', function() {
+                    document.querySelector('[data-tab="add-event"]').click();
+                });
+            }
+        }
+
+        // Update manage events display
+        function updateManageEventsDisplay(status = 'all') {
+            const container = document.getElementById('manage-events-container');
+            let filteredEvents = events.filter(event => event.organizerId === currentUser.id);
+            
+            if (status !== 'all') {
+                const today = new Date().toISOString().split('T')[0];
+                if (status === 'upcoming') {
+                    filteredEvents = filteredEvents.filter(event => event.date >= today);
+                } else if (status === 'past') {
+                    filteredEvents = filteredEvents.filter(event => event.date < today);
+                }
+            }
+
+            if (filteredEvents.length > 0) {
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${filteredEvents.map(event => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">${event.name}</div>
+                                            <div class="text-sm text-gray-500">${event.category}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(event.date)}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.venue}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.registered}/${event.capacity}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-purple-600 hover:text-purple-900 edit-event mr-3" data-event-id="${event.id}">Edit</button>
+                                            <button class="text-red-600 hover:text-red-900 delete-event" data-event-id="${event.id}">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Add event listeners to action buttons
+                document.querySelectorAll('.edit-event').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const eventId = parseInt(this.getAttribute('data-event-id'));
+                        alert(`Edit event ${eventId} functionality would be implemented here`);
+                    });
+                });
+
+                document.querySelectorAll('.delete-event').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const eventId = parseInt(this.getAttribute('data-event-id'));
+                        if (confirm('Are you sure you want to delete this event?')) {
+                            events = events.filter(e => e.id !== eventId);
+                            localStorage.setItem('eventhub_events', JSON.stringify(events));
+                            updateManageEventsDisplay(status);
+                            updateEventDisplay();
+                            updateDashboardStats();
+                            updateProfile();
+                            alert('Event deleted successfully!');
+                        }
+                    });
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="p-12 text-center">
+                        <i class="fas fa-tasks text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-xl font-medium text-gray-700 mb-2">No events to manage</h3>
+                        <p class="text-gray-500 mb-6">Get started by creating your first event.</p>
+                        <button class="btn-primary px-4 py-2 rounded-md text-sm font-medium quick-action" data-action="add-event">
+                            Create New Event
+                        </button>
+                    </div>
+                `;
+
+                document.querySelector('#manage-events-container .quick-action')?.addEventListener('click', function() {
+                    document.querySelector('[data-tab="add-event"]').click();
+                });
+            }
+        }
+
+        // Update my events display
+        function updateMyEventsDisplay() {
+            const container = document.getElementById('my-events-container');
+            const myEvents = events.filter(event => event.participants.includes(currentUser.id));
+
+            if (myEvents.length > 0) {
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organizer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${myEvents.map(event => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">${event.name}</div>
+                                            <div class="text-sm text-gray-500">${event.category}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(event.date)}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.venue}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.organizerName}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-red-600 hover:text-red-900 unregister-event" data-event-id="${event.id}">Unregister</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Add event listeners to unregister buttons
+                document.querySelectorAll('.unregister-event').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const eventId = parseInt(this.getAttribute('data-event-id'));
+                        const event = events.find(e => e.id === eventId);
+                        
+                        if (event && confirm(`Are you sure you want to unregister from ${event.name}?`)) {
+                            event.participants = event.participants.filter(id => id !== currentUser.id);
+                            event.registered--;
+                            localStorage.setItem('eventhub_events', JSON.stringify(events));
+                            updateMyEventsDisplay();
+                            updateEventDisplay();
+                            updateDashboardStats();
+                            updateProfile();
+                            alert(`You have unregistered from ${event.name}`);
+                        }
+                    });
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="p-12 text-center">
+                        <i class="fas fa-calendar-times text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-xl font-medium text-gray-700 mb-2">No registered events</h3>
+                        <p class="text-gray-500 mb-6">You haven't registered for any events yet.</p>
+                        <button class="btn-primary px-4 py-2 rounded-md text-sm font-medium quick-action" data-action="view-events">
+                            Browse Events
+                        </button>
+                    </div>
+                `;
+
+                document.querySelector('#my-events-container .quick-action')?.addEventListener('click', function() {
+                    document.querySelector('[data-tab="events"]').click();
+                });
+            }
+        }
+
+        // Update calendar display
+        function updateCalendar() {
+            const calendarDays = document.getElementById('calendar-days');
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            // Get day of week for first day (0 = Sunday, 1 = Monday, etc.)
+            const firstDayOfWeek = firstDay.getDay();
+            
+            // Calculate days in month
+            const daysInMonth = lastDay.getDate();
+            
+            let calendarHTML = '';
+            
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                calendarHTML += `<div class="h-24 bg-gray-50 rounded-md"></div>`;
+            }
+            
+            // Add cells for each day of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const dayEvents = events.filter(event => event.date === dateStr);
+                
+                calendarHTML += `
+                    <div class="h-24 border border-gray-200 rounded-md p-2 overflow-y-auto ${day === today.getDate() ? 'bg-purple-50 border-purple-200' : ''}">
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-medium ${day === today.getDate() ? 'text-purple-700' : 'text-gray-700'}">${day}</span>
+                            ${dayEvents.length > 0 ? `<span class="text-xs bg-purple-100 text-purple-800 px-1 rounded">${dayEvents.length}</span>` : ''}
+                        </div>
+                        <div class="mt-1 space-y-1">
+                            ${dayEvents.slice(0, 2).map(event => `
+                                <div class="text-xs truncate ${getCategoryColor(event.category)} text-white px-1 rounded">
+                                    ${event.name}
+                                </div>
+                            `).join('')}
+                            ${dayEvents.length > 2 ? `<div class="text-xs text-gray-500">+${dayEvents.length - 2} more</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            calendarDays.innerHTML = calendarHTML;
+        }
+
+        // Update reports with charts
+        function updateReports() {
+            if (currentUser.role !== 'organizer') return;
+            
+            // Update report statistics
+            const myEvents = events.filter(e => e.organizerId === currentUser.id);
+            const totalEvents = myEvents.length;
+            const totalParticipants = myEvents.reduce((sum, event) => sum + event.registered, 0);
+            const avgParticipation = totalEvents > 0 ? Math.round((totalParticipants / (totalEvents * 50)) * 100) : 0;
+            
+            // Find most popular category
+            const categoryCounts = {};
+            myEvents.forEach(event => {
+                categoryCounts[event.category] = (categoryCounts[event.category] || 0) + 1;
+            });
+            const popularCategory = Object.keys(categoryCounts).length > 0 
+                ? Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b)
+                : '-';
+            
+            document.getElementById('report-total-events').textContent = totalEvents;
+            document.getElementById('report-total-participants').textContent = totalParticipants;
+            document.getElementById('report-avg-participation').textContent = `${avgParticipation}%`;
+            document.getElementById('report-popular-category').textContent = popularCategory.charAt(0).toUpperCase() + popularCategory.slice(1);
+            
+            // Category distribution chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChart) categoryChart.destroy();
+            
+            const categoryData = {
+                technical: myEvents.filter(e => e.category === 'technical').length,
+                cultural: myEvents.filter(e => e.category === 'cultural').length,
+                sports: myEvents.filter(e => e.category === 'sports').length,
+                workshop: myEvents.filter(e => e.category === 'workshop').length
+            };
+            
+            categoryChart = new Chart(categoryCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Technical', 'Cultural', 'Sports', 'Workshop'],
+                    datasets: [{
+                        data: [categoryData.technical, categoryData.cultural, categoryData.sports, categoryData.workshop],
+                        backgroundColor: ['#7E57C2', '#26A69A', '#FF7043', '#FFA726'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Events by Category'
+                        }
+                    }
+                }
+            });
+            
+            // Participation rate chart
+            const participationCtx = document.getElementById('participationChart').getContext('2d');
+            if (participationChart) participationChart.destroy();
+            
+            const participationData = myEvents.map(event => ({
+                name: event.name,
+                rate: Math.round((event.registered / event.capacity) * 100)
+            })).slice(0, 5);
+            
+            participationChart = new Chart(participationCtx, {
+                type: 'bar',
+                data: {
+                    labels: participationData.map(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name),
+                    datasets: [{
+                        label: 'Participation Rate (%)',
+                        data: participationData.map(d => d.rate),
+                        backgroundColor: '#7E57C2',
+                        borderColor: '#65499c',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 5 Events by Participation'
+                        }
+                    }
+                }
+            });
+            
+            // Monthly events chart
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            if (monthlyChart) monthlyChart.destroy();
+            
+            // Group events by month
+            const monthlyData = {};
+            myEvents.forEach(event => {
+                const month = event.date.substring(0, 7); // YYYY-MM
+                monthlyData[month] = (monthlyData[month] || 0) + 1;
+            });
+            
+            // Get last 6 months
+            const months = [];
+            const monthCounts = [];
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                months.push(date.toLocaleString('default', { month: 'short' }) + ' ' + date.getFullYear().toString().substring(2));
+                monthCounts.push(monthlyData[monthStr] || 0);
+            }
+            
+            monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Events Created',
+                        data: monthCounts,
+                        backgroundColor: 'rgba(126, 87, 194, 0.1)',
+                        borderColor: '#7E57C2',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Events Created by Month'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update profile information
+        function updateProfile() {
+            document.getElementById('profile-initial').textContent = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-role').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            document.getElementById('profile-username').textContent = currentUser.username;
+            document.getElementById('profile-joined').textContent = currentUser.joined ? formatDate(currentUser.joined) : 'Recently';
+            
+            const eventsRegistered = events.filter(e => e.participants.includes(currentUser.id)).length;
+            document.getElementById('profile-events-registered').textContent = eventsRegistered;
+            
+            if (currentUser.role === 'organizer') {
+                const eventsCreated = events.filter(e => e.organizerId === currentUser.id).length;
+                document.getElementById('profile-events-created').textContent = eventsCreated;
+            }
+        }
+
+        // Handle quick actions
+        function handleQuickAction(action) {
+            switch(action) {
+                case 'add-event':
+                    document.querySelector('[data-tab="add-event"]').click();
+                    break;
+                case 'view-events':
+                    document.querySelector('[data-tab="events"]').click();
+                    break;
+                case 'my-events':
+                    document.querySelector('[data-tab="my-events"]').click();
+                    break;
+                case 'reports':
+                    document.querySelector('[data-tab="reports"]').click();
+                    break;
+            }
+        }
+
+        // Helper functions
+        function getCategoryClass(category) {
+            switch(category) {
+                case 'technical': return 'category-technical';
+                case 'cultural': return 'category-cultural';
+                case 'sports': return 'category-sports';
+                case 'workshop': return 'category-workshop';
+                default: return 'category-technical';
+            }
+        }
+
+        function getCategoryIcon(category) {
+            switch(category) {
+                case 'technical': return 'fas fa-laptop-code';
+                case 'cultural': return 'fas fa-music';
+                case 'sports': return 'fas fa-running';
+                case 'workshop': return 'fas fa-chalkboard-teacher';
+                default: return 'fas fa-calendar-day';
+            }
+        }
+
+        function getCategoryBadgeClass(category) {
+            switch(category) {
+                case 'technical': return 'bg-purple-100 text-purple-800';
+                case 'cultural': return 'bg-green-100 text-green-800';
+                case 'sports': return 'bg-red-100 text-red-800';
+                case 'workshop': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getCategoryColor(category) {
+            switch(category) {
+                case 'technical': return 'bg-purple-500';
+                case 'cultural': return 'bg-green-500';
+                case 'sports': return 'bg-red-500';
+                case 'workshop': return 'bg-yellow-500';
+                default: return 'bg-gray-500';
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
